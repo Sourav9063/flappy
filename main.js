@@ -87,6 +87,8 @@ let bestBird;
 
 // Current generation number for the evolutionary algorithm
 let generationNumber = parseInt(localStorage.getItem("generationNumber")) || 1;
+let highScore = parseInt(localStorage.getItem("highScore")) || 0;
+let currentScore = 0;
 
 /**
  * Represents a bird in the Flappy Bird game.
@@ -209,6 +211,12 @@ class Pipe {
       -((mainCanvas.width - mainCanvas.height) / 2) / mainCanvas.height -
         CONSTANTS.PIPE_OFFSCREEN_THRESHOLD_X
     ) {
+      currentScore++;
+      if (currentScore > highScore) {
+        highScore = currentScore;
+        localStorage.setItem("highScore", highScore.toString());
+      }
+
       pipes.shift(); // Remove the first (oldest) pipe
       return false; // Indicate that this pipe is no longer active
     }
@@ -385,6 +393,7 @@ function update() {
 
   // Check if all birds in the current generation have died
   if (deadBirds.length === birds.length) {
+    currentScore = 0; // Reset current score for the new generation
     generationNumber++; // Increment generation count
     localStorage.setItem("generationNumber", generationNumber.toString()); // Save generation number
     // Sort birds by score to identify the best performers
@@ -479,13 +488,27 @@ function update() {
     mainCanvas.width * CONSTANTS.TEXT_OFFSET_X_FACTOR,
     mainCanvas.height * CONSTANTS.TEXT_ALIVE_OFFSET_Y_FACTOR,
   );
+  mainCtx.fillText(
+    "High Score: " + highScore,
+    mainCanvas.width * CONSTANTS.TEXT_OFFSET_X_FACTOR,
+    mainCanvas.height *
+      (CONSTANTS.TEXT_ALIVE_OFFSET_Y_FACTOR +
+        CONSTANTS.TEXT_GENERATION_OFFSET_Y_FACTOR), // Display below "Num alive"
+  );
+  mainCtx.fillText(
+    "Current Score: " + (currentScore), // Display current score of the best bird
+    mainCanvas.width * CONSTANTS.TEXT_OFFSET_X_FACTOR,
+    mainCanvas.height *
+      (CONSTANTS.TEXT_ALIVE_OFFSET_Y_FACTOR +
+        2 * CONSTANTS.TEXT_GENERATION_OFFSET_Y_FACTOR), // Display below "High Score"
+  );
 }
 
 // Initialize birds, attempting to load a saved brain if available
 for (let i = 0; i < CONSTANTS.INITIAL_BIRDS_COUNT; i++) {
   const newBird = new Bird();
   newBird.brain.load();
-  if (i > 0) {
+  if (i > 500) {
     newBird.brain = mutate(newBird.brain);
   }
 }
